@@ -13,6 +13,7 @@ class ErrorCode(StrEnum):
     NOT_A_FILE = "not_a_file"
     NOT_A_DIRECTORY = "not_a_directory"
     ALREADY_EXISTS = "already_exists"
+    PERMISSION_DENIED = "permission_denied"
     OUTSIDE_SANDBOX = "outside_sandbox"
     WRITE_DISABLED = "write_disabled"
     LIMIT_EXCEEDED = "limit_exceeded"
@@ -47,6 +48,10 @@ class UnknownTool(ToolError):
 
 class NotFound(ToolError):
     default_code = ErrorCode.NOT_FOUND
+
+
+class PermissionDenied(ToolError):
+    default_code = ErrorCode.PERMISSION_DENIED
 
 
 class SandboxViolation(ToolError):

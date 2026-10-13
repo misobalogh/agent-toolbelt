@@ -2,9 +2,40 @@
 
 from __future__ import annotations
 
+import os
+import stat
+from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO, Literal
 
-from toolbelt.core.errors import InvalidInput, SandboxViolation
+from toolbelt.core.errors import (
+    ErrorCode,
+    InvalidInput,
+    NotFound,
+    PermissionDenied,
+    SandboxViolation,
+    ToolError,
+)
+
+EntryKind = Literal["file", "dir", "symlink", "other"]
+
+
+@dataclass(frozen=True)
+class Entry:
+    name: str
+    path: str
+    kind: EntryKind
+    size: int
+
+
+def kind_of(mode: int) -> EntryKind:
+    if stat.S_ISREG(mode):
+        return "file"
+    if stat.S_ISDIR(mode):
+        return "dir"
+    if stat.S_ISLNK(mode):
+        return "symlink"
+    return "other"
 
 
 class Sandbox:
@@ -37,5 +68,58 @@ class Sandbox:
 
     def display(self, resolved: Path) -> str:
         """Root-relative POSIX form of an already resolved path."""
-        relative = resolved.relative_to(self._root).as_posix()
-        return relative
+        return resolved.relative_to(self._root).as_posix()
+
+    def stat(self, raw: str) -> os.stat_result:
+        resolved = self.resolve(raw)
+        try:
+            return resolved.stat()
+        except FileNotFoundError:
+            raise _missing(raw) from None
+        except PermissionError:
+            raise _denied(raw) from None
+
+    def open_read(self, raw: str) -> BinaryIO:
+        resolved = self.resolve(raw)
+        try:
+            if not resolved.is_file():
+                if not resolved.exists():
+                    raise _missing(raw)
+                raise ToolError(
+                    f"not a regular file: {raw}",
+                    hint="use list_dir to see what the directory contains",
+                    code=ErrorCode.NOT_A_FILE,
+                )
+            return resolved.open("rb")
+        except PermissionError:
+            raise _denied(raw) from None
+
+    def list_dir(self, raw: str) -> list[Entry]:
+        resolved = self.resolve(raw)
+        if not resolved.exists():
+            raise _missing(raw)
+        if not resolved.is_dir():
+            raise ToolError(
+                f"not a directory: {raw}",
+                hint="use file_info or read_text for files",
+                code=ErrorCode.NOT_A_DIRECTORY,
+            )
+        try:
+            children = sorted(resolved.iterdir(), key=lambda p: p.name)
+        except PermissionError:
+            raise _denied(raw) from None
+        entries = []
+        for child in children:
+            info = child.lstat()
+            entries.append(
+                Entry(child.name, self.display(child), kind_of(info.st_mode), info.st_size)
+            )
+        return entries
+
+
+def _missing(raw: str) -> NotFound:
+    return NotFound(f"no such file or directory: {raw}", hint="use list_dir to find valid paths")
+
+
+def _denied(raw: str) -> PermissionDenied:
+    return PermissionDenied(f"permission denied: {raw}", hint="choose a different path")
