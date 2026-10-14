@@ -88,3 +88,33 @@ def test_display_is_root_relative_posix(root: Path) -> None:
     box = Sandbox(root)
     assert box.display(box.resolve("docs/a.txt")) == "docs/a.txt"
     assert box.display(box.resolve(".")) == "."
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "\uff0e\uff0e/secret.txt",
+        "\u2025/secret.txt",
+        "..\\..\\etc\\passwd",
+        "docs/\u202eaxt.txt",
+        "e\u0301.txt",
+        "\u00e9.txt",
+        "docs//a.txt",
+        "./docs/./a.txt",
+        "docs/a.txt/",
+    ],
+)
+def test_lookalike_and_odd_names_stay_inside_root(root: Path, raw: str) -> None:
+    resolved = Sandbox(root).resolve(raw)
+    assert resolved.is_relative_to(root)
+
+
+@pytest.mark.parametrize("raw", ["../ROOT/docs/a.txt", "../Root", "docs/../../ROOT"])
+def test_case_variants_of_the_root_do_not_grant_access(root: Path, raw: str) -> None:
+    with pytest.raises(SandboxViolation):
+        Sandbox(root).resolve(raw)
+
+
+def test_unicode_names_do_not_alias_each_other(root: Path) -> None:
+    box = Sandbox(root)
+    assert box.resolve("e\u0301.txt") != box.resolve("\u00e9.txt")
