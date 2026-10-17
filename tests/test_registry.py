@@ -1,8 +1,13 @@
+from pathlib import Path
+
 import pytest
 from pydantic import BaseModel
 
 from toolbelt.core.context import Context
+from toolbelt.core.errors import ErrorCode, InvalidInput, NotFound, ToolError, UnknownTool
+from toolbelt.core.models import ToolInput, ToolOutput
 from toolbelt.core.registry import Registry, default_registry
+from toolbelt.core.sandbox import Sandbox
 
 
 class EchoInput(BaseModel):
@@ -94,3 +99,67 @@ def test_non_model_types_are_rejected() -> None:
 
 def test_default_registry_is_a_registry() -> None:
     assert isinstance(default_registry, Registry)
+
+
+class StrictInput(ToolInput):
+    count: int
+
+
+class CountOutput(ToolOutput):
+    doubled: int
+
+
+def make_registry() -> Registry:
+    registry = Registry()
+
+    @registry.tool
+    def double(args: StrictInput, ctx: Context) -> CountOutput:
+        """Double the count."""
+        return CountOutput(doubled=args.count * 2)
+
+    @registry.tool
+    def explode(args: StrictInput, ctx: Context) -> CountOutput:
+        """Always fails with a bare exception."""
+        raise RuntimeError("boom")
+
+    @registry.tool
+    def refuse(args: StrictInput, ctx: Context) -> CountOutput:
+        """Always fails with a typed error."""
+        raise NotFound("nothing here", hint="try elsewhere")
+
+    return registry
+
+
+def test_call_validates_and_runs(tmp_path: Path) -> None:
+    result = make_registry().call("double", {"count": 4}, Sandbox(tmp_path))
+    assert result == CountOutput(doubled=8)
+
+
+def test_call_reports_invalid_input_with_field_names(tmp_path: Path) -> None:
+    with pytest.raises(InvalidInput) as info:
+        make_registry().call("double", {"count": "many"}, Sandbox(tmp_path))
+    assert "count" in info.value.message
+
+
+def test_call_rejects_unknown_fields(tmp_path: Path) -> None:
+    with pytest.raises(InvalidInput):
+        make_registry().call("double", {"count": 1, "cnt": 2}, Sandbox(tmp_path))
+
+
+def test_call_unknown_tool_suggests_close_names(tmp_path: Path) -> None:
+    with pytest.raises(UnknownTool) as info:
+        make_registry().call("doubel", {"count": 1}, Sandbox(tmp_path))
+    assert "double" in info.value.hint
+
+
+def test_call_passes_typed_errors_through(tmp_path: Path) -> None:
+    with pytest.raises(NotFound) as info:
+        make_registry().call("refuse", {"count": 1}, Sandbox(tmp_path))
+    assert info.value.hint == "try elsewhere"
+
+
+def test_call_wraps_unexpected_exceptions(tmp_path: Path) -> None:
+    with pytest.raises(ToolError) as info:
+        make_registry().call("explode", {"count": 1}, Sandbox(tmp_path))
+    assert info.value.code is ErrorCode.INTERNAL
+    assert isinstance(info.value.__cause__, RuntimeError)
