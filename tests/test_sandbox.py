@@ -118,3 +118,11 @@ def test_case_variants_of_the_root_do_not_grant_access(root: Path, raw: str) -> 
 def test_unicode_names_do_not_alias_each_other(root: Path) -> None:
     box = Sandbox(root)
     assert box.resolve("e\u0301.txt") != box.resolve("\u00e9.txt")
+
+
+def test_sibling_directory_sharing_the_root_prefix_is_rejected(root: Path) -> None:
+    sibling = root.parent / (root.name + "-evil")
+    sibling.mkdir()
+    (sibling / "secret.txt").write_text("secret")
+    with pytest.raises(SandboxViolation):
+        Sandbox(root).resolve("../root-evil/secret.txt")

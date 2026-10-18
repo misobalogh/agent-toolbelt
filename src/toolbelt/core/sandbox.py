@@ -59,7 +59,7 @@ class Sandbox:
         if not candidate.is_absolute():
             candidate = self._root / candidate
         resolved = candidate.resolve()
-        if not str(resolved).startswith(str(self._root)):
+        if not resolved.is_relative_to(self._root):
             raise SandboxViolation(
                 f"path is outside the sandbox: {raw}",
                 hint="use a path relative to the sandbox root",
