@@ -1,0 +1,60 @@
+[
+  {
+    "description": "Repeat a text a few times, optionally upper-cased.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {
+        "case": {
+          "default": "keep",
+          "enum": [
+            "keep",
+            "upper"
+          ],
+          "title": "Case",
+          "type": "string"
+        },
+        "repeat": {
+          "default": 1,
+          "description": "How many times to repeat it.",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "suffix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suffix"
+        },
+        "text": {
+          "description": "Text to repeat.",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "EchoInput",
+      "type": "object"
+    },
+    "name": "echo"
+  },
+  {
+    "description": "Check that the tool layer is alive.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {},
+      "title": "PingInput",
+      "type": "object"
+    },
+    "name": "ping"
+  }
+]
