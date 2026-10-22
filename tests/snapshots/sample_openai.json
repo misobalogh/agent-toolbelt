@@ -12,7 +12,6 @@
               "keep",
               "upper"
             ],
-            "title": "Case",
             "type": "string"
           },
           "repeat": {
@@ -20,7 +19,6 @@
             "description": "How many times to repeat it.",
             "maximum": 5,
             "minimum": 1,
-            "title": "Repeat",
             "type": "integer"
           },
           "suffix": {
@@ -32,19 +30,16 @@
                 "type": "null"
               }
             ],
-            "default": null,
-            "title": "Suffix"
+            "default": null
           },
           "text": {
             "description": "Text to repeat.",
-            "title": "Text",
             "type": "string"
           }
         },
         "required": [
           "text"
         ],
-        "title": "EchoInput",
         "type": "object"
       }
     },
@@ -57,7 +52,6 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {},
-        "title": "PingInput",
         "type": "object"
       }
     },

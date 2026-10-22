@@ -16,13 +16,42 @@ def export_schemas(registry: Registry, fmt: SchemaFormat) -> list[dict[str, Any]
     return [convert(spec) for spec in registry.specs()]
 
 
+# Keys whose values are name -> schema maps, or plain data that must stay untouched.
+_NAME_MAPS = {"properties", "$defs"}
+_DATA_KEYS = {"default", "examples", "const", "enum"}
+
+
+def _input_schema(spec: ToolSpec) -> dict[str, Any]:
+    schema: dict[str, Any] = _strip_titles(spec.input_model.model_json_schema())
+    return schema
+
+
+def _strip_titles(node: Any) -> Any:
+    """Drop the `title` keys pydantic adds to every field, they only cost tokens."""
+    if isinstance(node, list):
+        return [_strip_titles(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+    cleaned: dict[str, Any] = {}
+    for key, value in node.items():
+        if key == "title":
+            continue
+        if key in _NAME_MAPS and isinstance(value, dict):
+            cleaned[key] = {name: _strip_titles(sub) for name, sub in value.items()}
+        elif key in _DATA_KEYS:
+            cleaned[key] = value
+        else:
+            cleaned[key] = _strip_titles(value)
+    return cleaned
+
+
 def _to_openai(spec: ToolSpec) -> dict[str, Any]:
     return {
         "type": "function",
         "function": {
             "name": spec.name,
             "description": spec.description,
-            "parameters": spec.input_model.model_json_schema(),
+            "parameters": _input_schema(spec),
         },
     }
 
@@ -31,7 +60,7 @@ def _to_anthropic(spec: ToolSpec) -> dict[str, Any]:
     return {
         "name": spec.name,
         "description": spec.description,
-        "input_schema": spec.input_model.model_json_schema(),
+        "input_schema": _input_schema(spec),
     }
 
 
@@ -39,8 +68,8 @@ def _to_mcp(spec: ToolSpec) -> dict[str, Any]:
     return {
         "name": spec.name,
         "description": spec.description,
-        "inputSchema": spec.input_model.model_json_schema(),
-        "outputSchema": spec.output_model.model_json_schema(mode="serialization"),
+        "inputSchema": _input_schema(spec),
+        "outputSchema": _strip_titles(spec.output_model.model_json_schema(mode="serialization")),
     }
 
 

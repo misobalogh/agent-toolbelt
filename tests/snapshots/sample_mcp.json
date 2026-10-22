@@ -10,7 +10,6 @@
             "keep",
             "upper"
           ],
-          "title": "Case",
           "type": "string"
         },
         "repeat": {
@@ -18,7 +17,6 @@
           "description": "How many times to repeat it.",
           "maximum": 5,
           "minimum": 1,
-          "title": "Repeat",
           "type": "integer"
         },
         "suffix": {
@@ -30,19 +28,16 @@
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Suffix"
+          "default": null
         },
         "text": {
           "description": "Text to repeat.",
-          "title": "Text",
           "type": "string"
         }
       },
       "required": [
         "text"
       ],
-      "title": "EchoInput",
       "type": "object"
     },
     "name": "echo",
@@ -51,11 +46,9 @@
         "Line": {
           "properties": {
             "index": {
-              "title": "Index",
               "type": "integer"
             },
             "text": {
-              "title": "Text",
               "type": "string"
             }
           },
@@ -63,7 +56,6 @@
             "index",
             "text"
           ],
-          "title": "Line",
           "type": "object"
         }
       },
@@ -72,14 +64,12 @@
           "items": {
             "$ref": "#/$defs/Line"
           },
-          "title": "Lines",
           "type": "array"
         }
       },
       "required": [
         "lines"
       ],
-      "title": "EchoOutput",
       "type": "object"
     }
   },
@@ -88,21 +78,18 @@
     "inputSchema": {
       "additionalProperties": false,
       "properties": {},
-      "title": "PingInput",
       "type": "object"
     },
     "name": "ping",
     "outputSchema": {
       "properties": {
         "ok": {
-          "title": "Ok",
           "type": "boolean"
         }
       },
       "required": [
         "ok"
       ],
-      "title": "PingOutput",
       "type": "object"
     }
   }
