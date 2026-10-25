@@ -27,6 +27,26 @@ whole filesystem.
 
 Python 3.12, uv, pydantic v2, pytest, ruff, mypy --strict.
 
+## Schema export
+
+`toolbelt.adapters.schema.export_schemas(registry, fmt)` renders every
+registered tool as a definition for one of three targets:
+
+| format      | shape                                              |
+|-------------|----------------------------------------------------|
+| `openai`    | `{"type": "function", "function": {..., "parameters"}}` |
+| `anthropic` | `{"name", "description", "input_schema"}`          |
+| `mcp`       | `{"name", "description", "inputSchema", "outputSchema"}` |
+
+Schemas come from the pydantic models, nothing is written by hand. Snapshot
+tests in `tests/snapshots/` make every schema change visible in review. After
+an intended change, regenerate them and read the diff:
+
+```
+UPDATE_SNAPSHOTS=1 uv run pytest
+git diff tests/snapshots
+```
+
 ## Development
 
 ```
