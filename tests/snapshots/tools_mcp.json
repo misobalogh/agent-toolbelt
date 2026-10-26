@@ -1,0 +1,88 @@
+[
+  {
+    "description": "List the files and directories directly inside a directory.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "include_hidden": {
+          "default": false,
+          "description": "Include names starting with a dot.",
+          "type": "boolean"
+        },
+        "max_entries": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum entries to return. Defaults to the configured limit."
+        },
+        "path": {
+          "default": ".",
+          "description": "Directory to list, relative to the sandbox root.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "list_dir",
+    "outputSchema": {
+      "$defs": {
+        "DirEntry": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "file",
+                "dir",
+                "symlink",
+                "other"
+              ],
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "name",
+            "path",
+            "kind",
+            "size"
+          ],
+          "type": "object"
+        }
+      },
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/DirEntry"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "truncated": {
+          "description": "True when more entries exist than were returned.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "entries",
+        "truncated"
+      ],
+      "type": "object"
+    }
+  }
+]

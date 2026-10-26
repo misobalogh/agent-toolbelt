@@ -1,0 +1,37 @@
+[
+  {
+    "function": {
+      "description": "List the files and directories directly inside a directory.",
+      "name": "list_dir",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "include_hidden": {
+            "default": false,
+            "description": "Include names starting with a dot.",
+            "type": "boolean"
+          },
+          "max_entries": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Maximum entries to return. Defaults to the configured limit."
+          },
+          "path": {
+            "default": ".",
+            "description": "Directory to list, relative to the sandbox root.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "function"
+  }
+]
