@@ -1,5 +1,66 @@
 [
   {
+    "description": "Return the kind, size, modification time and guessed MIME type of a path.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "File or directory, relative to the sandbox root.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "file_info",
+    "outputSchema": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "file",
+            "dir",
+            "symlink",
+            "other"
+          ],
+          "type": "string"
+        },
+        "mime_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Guessed from the file name, not the content."
+        },
+        "modified": {
+          "description": "Last modification time in UTC.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size": {
+          "description": "Size in bytes.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "kind",
+        "size",
+        "modified",
+        "mime_type"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "List the files and directories directly inside a directory.",
     "inputSchema": {
       "additionalProperties": false,

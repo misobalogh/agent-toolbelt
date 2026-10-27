@@ -1,6 +1,26 @@
 [
   {
     "function": {
+      "description": "Return the kind, size, modification time and guessed MIME type of a path.",
+      "name": "file_info",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "description": "File or directory, relative to the sandbox root.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
       "description": "List the files and directories directly inside a directory.",
       "name": "list_dir",
       "parameters": {
