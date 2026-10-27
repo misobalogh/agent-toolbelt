@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 import toolbelt.tools  # noqa: F401
-from toolbelt.core.errors import NotFound, SandboxViolation
+from toolbelt.core.errors import InvalidInput, NotFound, SandboxViolation
 from toolbelt.core.registry import default_registry
 from toolbelt.core.sandbox import Sandbox
 from toolbelt.tools.file_info import FileInfoOutput
@@ -49,3 +49,8 @@ def test_missing_path_is_not_found(box: Sandbox) -> None:
 def test_escape_attempts_are_rejected(box: Sandbox, path: str) -> None:
     with pytest.raises(SandboxViolation):
         run(box, path)
+
+
+def test_nul_byte_path_is_invalid_input_not_internal(box: Sandbox) -> None:
+    with pytest.raises(InvalidInput):
+        run(box, "notes.txt\x00.png")

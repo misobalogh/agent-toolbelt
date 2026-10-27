@@ -55,6 +55,8 @@ class Sandbox:
         Relative paths are taken relative to the root. Symlinks are followed
         before the containment check, so a link cannot lead outside.
         """
+        if "\x00" in raw:
+            raise InvalidInput("path contains a NUL byte", hint="remove the NUL character")
         candidate = Path(raw)
         if not candidate.is_absolute():
             candidate = self._root / candidate

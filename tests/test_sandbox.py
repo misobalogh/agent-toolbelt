@@ -126,3 +126,10 @@ def test_sibling_directory_sharing_the_root_prefix_is_rejected(root: Path) -> No
     (sibling / "secret.txt").write_text("secret")
     with pytest.raises(SandboxViolation):
         Sandbox(root).resolve("../root-evil/secret.txt")
+
+
+@pytest.mark.parametrize("raw", ["a\x00b", "docs/a.txt\x00.png", "\x00"])
+def test_nul_bytes_are_a_typed_input_error(root: Path, raw: str) -> None:
+    with pytest.raises(InvalidInput) as info:
+        Sandbox(root).resolve(raw)
+    assert info.value.code is ErrorCode.INVALID_INPUT
