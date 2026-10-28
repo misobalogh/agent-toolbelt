@@ -145,5 +145,79 @@
       ],
       "type": "object"
     }
+  },
+  {
+    "description": "Read a text file. Large files are cut at max_bytes and flagged as truncated.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Text encoding. Detected automatically when omitted."
+        },
+        "max_bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum bytes to read. Defaults to the configured limit."
+        },
+        "path": {
+          "description": "File to read, relative to the sandbox root.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "read_text",
+    "outputSchema": {
+      "properties": {
+        "bytes_read": {
+          "type": "integer"
+        },
+        "encoding": {
+          "description": "The encoding that was used to decode the text.",
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "total_bytes": {
+          "type": "integer"
+        },
+        "truncated": {
+          "description": "True when the file is larger than what was read.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "text",
+        "encoding",
+        "bytes_read",
+        "total_bytes",
+        "truncated"
+      ],
+      "type": "object"
+    }
   }
 ]
