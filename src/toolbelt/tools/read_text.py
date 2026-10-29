@@ -46,18 +46,19 @@ def read_text(args: ReadTextInput, ctx: Context) -> ReadTextOutput:
     total = ctx.sandbox.stat(args.path).st_size
     with ctx.sandbox.open_read(args.path) as handle:
         data = handle.read(limit)
-    encoding = args.encoding or _detect_encoding(data)
+    truncated = total > len(data)
+    encoding = args.encoding or _detect_encoding(data, truncated)
     return ReadTextOutput(
         path=ctx.sandbox.display(ctx.sandbox.resolve(args.path)),
-        text=_decode(data, encoding),
+        text=_decode(data, encoding, truncated),
         encoding=encoding,
         bytes_read=len(data),
         total_bytes=total,
-        truncated=total > len(data),
+        truncated=truncated,
     )
 
 
-def _detect_encoding(data: bytes) -> str:
+def _detect_encoding(data: bytes, truncated: bool) -> str:
     for bom, name in BOMS:
         if data.startswith(bom):
             return name
@@ -67,18 +68,27 @@ def _detect_encoding(data: bytes) -> str:
             hint="use file_info to check the type, or a media tool for pdf, image and audio",
         )
     for candidate in ("utf-8", "cp1252"):
-        try:
-            data.decode(candidate)
-        except UnicodeDecodeError:
-            continue
-        return candidate
+        if _decodes_cleanly(data, candidate, truncated):
+            return candidate
     return "latin-1"
 
 
-def _decode(data: bytes, encoding: str) -> str:
+def _decodes_cleanly(data: bytes, encoding: str, truncated: bool) -> bool:
+    # A cut in the middle of a multibyte character is not an error when the
+    # file continues past the cut, so a partial tail must not rule out utf-8.
+    decoder = codecs.getincrementaldecoder(encoding)()
     try:
-        return data.decode(encoding, errors="replace")
+        decoder.decode(data, final=not truncated)
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
+def _decode(data: bytes, encoding: str, truncated: bool) -> str:
+    try:
+        decoder = codecs.getincrementaldecoder(encoding)(errors="replace")
     except LookupError:
         raise InvalidInput(
             f"unknown encoding: {encoding}", hint="use a Python codec name such as utf-8"
         ) from None
+    return decoder.decode(data, final=not truncated)

@@ -107,3 +107,11 @@ def test_escape_attempts_are_rejected(box: Sandbox, path: str) -> None:
     with pytest.raises(ToolError) as info:
         run(box, {"path": path})
     assert info.value.code is ErrorCode.OUTSIDE_SANDBOX
+
+
+def test_truncation_inside_a_multibyte_character_keeps_utf8(box: Sandbox) -> None:
+    (box.root / "a.txt").write_text("\u00e9" * 100, encoding="utf-8")
+    out = run(box, {"path": "a.txt", "max_bytes": 101})
+    assert out.encoding == "utf-8"
+    assert out.text == "\u00e9" * 50
+    assert out.truncated
