@@ -17,6 +17,40 @@
     "name": "file_info"
   },
   {
+    "description": "Find regular files below a directory that match a glob pattern, sorted by path.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {
+        "max_results": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum matches to return. Defaults to the configured limit."
+        },
+        "path": {
+          "default": ".",
+          "description": "Directory to search from, relative to the root.",
+          "type": "string"
+        },
+        "pattern": {
+          "description": "Glob pattern such as '*.pdf' or '**/*.md'.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "name": "find_files"
+  },
+  {
     "description": "List the files and directories directly inside a directory.",
     "input_schema": {
       "additionalProperties": false,

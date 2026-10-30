@@ -61,6 +61,76 @@
     }
   },
   {
+    "description": "Find regular files below a directory that match a glob pattern, sorted by path.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "max_results": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum matches to return. Defaults to the configured limit."
+        },
+        "path": {
+          "default": ".",
+          "description": "Directory to search from, relative to the root.",
+          "type": "string"
+        },
+        "pattern": {
+          "description": "Glob pattern such as '*.pdf' or '**/*.md'.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "name": "find_files",
+    "outputSchema": {
+      "$defs": {
+        "FoundFile": {
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "path",
+            "size"
+          ],
+          "type": "object"
+        }
+      },
+      "properties": {
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/FoundFile"
+          },
+          "type": "array"
+        },
+        "truncated": {
+          "description": "True when more files matched than were returned.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "matches",
+        "truncated"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "List the files and directories directly inside a directory.",
     "inputSchema": {
       "additionalProperties": false,

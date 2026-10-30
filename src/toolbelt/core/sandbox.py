@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import stat
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Literal
@@ -117,6 +118,24 @@ class Sandbox:
                 Entry(child.name, self.display(child), kind_of(info.st_mode), info.st_size)
             )
         return entries
+
+    def glob(self, raw_base: str, pattern: str) -> Iterator[Entry]:
+        """Yield regular files below `raw_base` that match a glob pattern."""
+        if not pattern or Path(pattern).is_absolute() or ".." in Path(pattern).parts:
+            raise InvalidInput(
+                f"invalid glob pattern: {pattern!r}",
+                hint="use a relative pattern without '..', for example '**/*.txt'",
+            )
+        base = self.resolve(raw_base)
+        if not base.is_dir():
+            raise _missing(raw_base)
+        for match in base.glob(pattern):
+            try:
+                info = match.stat()
+            except OSError:
+                continue
+            if stat.S_ISREG(info.st_mode):
+                yield Entry(match.name, self.display(match), "file", info.st_size)
 
 
 def _missing(raw: str) -> NotFound:
