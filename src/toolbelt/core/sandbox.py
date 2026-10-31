@@ -131,10 +131,12 @@ class Sandbox:
             raise _missing(raw_base)
         for match in base.glob(pattern):
             try:
-                info = match.stat()
+                target = match.resolve(strict=True)
+                info = target.stat()
             except OSError:
                 continue
-            if stat.S_ISREG(info.st_mode):
+            # A link below the base may still lead out of the root.
+            if target.is_relative_to(self._root) and stat.S_ISREG(info.st_mode):
                 yield Entry(match.name, self.display(match), "file", info.st_size)
 
 

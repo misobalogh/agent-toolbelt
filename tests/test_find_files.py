@@ -79,3 +79,18 @@ def test_escaping_base_directories_are_rejected(box: Sandbox, path: str) -> None
     with pytest.raises(ToolError) as info:
         run(box, {"pattern": "*", "path": path})
     assert info.value.code is ErrorCode.OUTSIDE_SANDBOX
+
+
+def test_files_behind_an_escaping_symlink_are_not_listed(box: Sandbox, tmp_path: Path) -> None:
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("secret")
+    (box.root / "link").symlink_to(outside, target_is_directory=True)
+    (box.root / "link.txt").symlink_to(outside / "secret.txt")
+    assert paths(run(box, {"pattern": "link/*"})) == []
+    assert paths(run(box, {"pattern": "link*"})) == []
+
+
+def test_symlinks_that_stay_inside_are_listed(box: Sandbox) -> None:
+    (box.root / "alias.txt").symlink_to(box.root / "top.txt")
+    assert "alias.txt" in paths(run(box, {"pattern": "alias.txt"}))
