@@ -50,6 +50,10 @@ class NotFound(ToolError):
     default_code = ErrorCode.NOT_FOUND
 
 
+class AlreadyExists(ToolError):
+    default_code = ErrorCode.ALREADY_EXISTS
+
+
 class PermissionDenied(ToolError):
     default_code = ErrorCode.PERMISSION_DENIED
 

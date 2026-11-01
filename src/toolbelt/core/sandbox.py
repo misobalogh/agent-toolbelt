@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import BinaryIO, Literal
 
 from toolbelt.core.errors import (
+    AlreadyExists,
     ErrorCode,
     InvalidInput,
     NotFound,
@@ -40,11 +41,12 @@ def kind_of(mode: int) -> EntryKind:
 
 
 class Sandbox:
-    def __init__(self, root: str | Path) -> None:
+    def __init__(self, root: str | Path, *, allow_write: bool = False) -> None:
         resolved = Path(root).resolve()
         if not resolved.is_dir():
             raise InvalidInput(f"sandbox root is not a directory: {root}")
         self._root = resolved
+        self._allow_write = allow_write
 
     @property
     def root(self) -> Path:
@@ -95,6 +97,36 @@ class Sandbox:
                 )
             return resolved.open("rb")
         except PermissionError:
+            raise _denied(raw) from None
+
+    def open_write(
+        self, raw: str, *, overwrite: bool = False, create_parents: bool = False
+    ) -> BinaryIO:
+        if not self._allow_write:
+            raise ToolError(
+                "writing is disabled in this sandbox",
+                hint="the operator must create the Sandbox with allow_write=True",
+                code=ErrorCode.WRITE_DISABLED,
+            )
+        resolved = self.resolve(raw)
+        if resolved == self._root:
+            raise InvalidInput("cannot write to the sandbox root itself")
+        if not resolved.parent.is_dir():
+            if not create_parents:
+                raise NotFound(
+                    f"parent directory does not exist: {self.display(resolved.parent)}",
+                    hint="set create_parents to true or create the directory first",
+                )
+            resolved.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            return resolved.open("wb" if overwrite else "xb")
+        except FileExistsError:
+            raise AlreadyExists(
+                f"file already exists: {raw}", hint="set overwrite to true to replace it"
+            ) from None
+        except IsADirectoryError:
+            raise ToolError(f"not a regular file: {raw}", code=ErrorCode.NOT_A_FILE) from None
+        except (PermissionError, NotADirectoryError):
             raise _denied(raw) from None
 
     def list_dir(self, raw: str) -> list[Entry]:

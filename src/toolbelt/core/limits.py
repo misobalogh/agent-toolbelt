@@ -15,6 +15,7 @@ class Limits:
     """Defaults are conservative on purpose. Callers raise them explicitly."""
 
     max_read_bytes: int = 1_000_000
+    max_write_bytes: int = 1_000_000
     max_entries: int = 1_000
     timeout_s: float = 10.0
 
