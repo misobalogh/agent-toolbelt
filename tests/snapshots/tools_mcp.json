@@ -289,5 +289,52 @@
       ],
       "type": "object"
     }
+  },
+  {
+    "description": "Write text to a file. Disabled unless the operator enabled writing for the sandbox.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the file if it already exists.",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "File to write, relative to the sandbox root.",
+          "type": "string"
+        },
+        "text": {
+          "description": "Content to write, encoded as UTF-8.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "text"
+      ],
+      "type": "object"
+    },
+    "name": "write_text",
+    "outputSchema": {
+      "properties": {
+        "bytes_written": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "bytes_written"
+      ],
+      "type": "object"
+    }
   }
 ]
