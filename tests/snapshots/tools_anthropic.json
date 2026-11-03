@@ -1,5 +1,27 @@
 [
   {
+    "description": "Extract the files of a zip or tar archive. Empty directories are not recreated.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {
+        "archive": {
+          "description": "Zip or tar archive, relative to the sandbox root.",
+          "type": "string"
+        },
+        "dest": {
+          "default": ".",
+          "description": "Directory to extract into. Created if missing.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "archive"
+      ],
+      "type": "object"
+    },
+    "name": "extract_archive"
+  },
+  {
     "description": "Return the kind, size, modification time and guessed MIME type of a path.",
     "input_schema": {
       "additionalProperties": false,

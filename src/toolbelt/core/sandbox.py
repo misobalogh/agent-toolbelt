@@ -99,15 +99,18 @@ class Sandbox:
         except PermissionError:
             raise _denied(raw) from None
 
-    def open_write(
-        self, raw: str, *, overwrite: bool = False, create_parents: bool = False
-    ) -> BinaryIO:
+    def ensure_writable(self) -> None:
         if not self._allow_write:
             raise ToolError(
                 "writing is disabled in this sandbox",
                 hint="the operator must create the Sandbox with allow_write=True",
                 code=ErrorCode.WRITE_DISABLED,
             )
+
+    def open_write(
+        self, raw: str, *, overwrite: bool = False, create_parents: bool = False
+    ) -> BinaryIO:
+        self.ensure_writable()
         resolved = self.resolve(raw)
         if resolved == self._root:
             raise InvalidInput("cannot write to the sandbox root itself")

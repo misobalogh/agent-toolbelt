@@ -17,6 +17,9 @@ class Limits:
     max_read_bytes: int = 1_000_000
     max_write_bytes: int = 1_000_000
     max_entries: int = 1_000
+    max_extract_files: int = 1_000
+    max_extract_bytes: int = 50_000_000
+    max_compression_ratio: int = 100
     timeout_s: float = 10.0
 
     def with_overrides(self, **overrides: Any) -> Limits:
