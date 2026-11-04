@@ -27,6 +27,29 @@ whole filesystem.
 
 Python 3.12, uv, pydantic v2, pytest, ruff, mypy --strict.
 
+## Tools
+
+| tool              | what it does                                                        |
+|-------------------|---------------------------------------------------------------------|
+| `list_dir`        | list a directory, hidden files optional, truncated at a limit       |
+| `file_info`       | kind, size, modification time and guessed MIME type                 |
+| `read_text`       | read text with encoding detection and truncation info               |
+| `find_files`      | glob search, never returns files behind a symlink that leaves the root |
+| `write_text`      | write UTF-8 text, only when the sandbox is created with `allow_write=True` |
+| `extract_archive` | unpack zip and tar with traversal, link and zip bomb protection     |
+
+```python
+from toolbelt.core.registry import default_registry
+from toolbelt.core.sandbox import Sandbox
+import toolbelt.tools  # registers the tools
+
+box = Sandbox("/srv/agent-workspace")
+out = default_registry.call("find_files", {"pattern": "**/*.md"}, box)
+```
+
+Failures are `ToolError`s with `code`, `message` and `hint`, for example
+`outside_sandbox`, `limit_exceeded` or `write_disabled`.
+
 ## Schema export
 
 `toolbelt.adapters.schema.export_schemas(registry, fmt)` renders every
@@ -58,4 +81,5 @@ uv run mypy --strict src
 
 ## Status
 
-Early work in progress. See the commit history for what exists so far.
+Done: core (registry, sandbox, errors, limits), schema export, file tools.
+Next: media tools (pdf, image, audio), MCP and CLI adapters, evals.
