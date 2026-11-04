@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import stat
 import tarfile
 import zipfile
 import zlib
@@ -38,6 +39,7 @@ class _Member:
     name: str
     size: int
     is_dir: bool
+    is_plain: bool
     open: Callable[[], IO[bytes]]
 
 
@@ -77,6 +79,11 @@ def _list_members(archive: zipfile.ZipFile | tarfile.TarFile, ctx: Context) -> l
     members: list[_Member] = []
     for member in _iter_members(archive):
         ctx.deadline.check()
+        if not member.is_plain:
+            raise Unsupported(
+                f"archive entry is a link or special file: {member.name!r}",
+                hint="only regular files and directories are extracted, the archive is unsafe",
+            )
         members.append(member)
         if len(members) > ctx.limits.max_extract_files:
             raise LimitExceeded(
@@ -89,12 +96,17 @@ def _list_members(archive: zipfile.ZipFile | tarfile.TarFile, ctx: Context) -> l
 def _iter_members(archive: zipfile.ZipFile | tarfile.TarFile) -> Iterator[_Member]:
     if isinstance(archive, zipfile.ZipFile):
         for zinfo in archive.infolist():
+            mode = zinfo.external_attr >> 16
+            plain = not stat.S_ISLNK(mode) and stat.S_IFMT(mode) in (0, stat.S_IFREG, stat.S_IFDIR)
             yield _Member(
-                zinfo.filename, zinfo.file_size, zinfo.is_dir(), partial(archive.open, zinfo)
+                zinfo.filename, zinfo.file_size, zinfo.is_dir(), plain, partial(archive.open, zinfo)
             )
     else:
         for tinfo in archive:
-            yield _Member(tinfo.name, tinfo.size, tinfo.isdir(), partial(_open_tar, archive, tinfo))
+            plain = tinfo.isfile() or tinfo.isdir()
+            yield _Member(
+                tinfo.name, tinfo.size, tinfo.isdir(), plain, partial(_open_tar, archive, tinfo)
+            )
 
 
 def _open_tar(archive: tarfile.TarFile, info: tarfile.TarInfo) -> IO[bytes]:

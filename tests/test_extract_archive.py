@@ -144,3 +144,37 @@ def test_archive_outside_the_root_is_rejected(box: Sandbox, tmp_path: Path) -> N
     make_zip(tmp_path / "outside.zip", {"x.txt": b"x"})
     with pytest.raises(SandboxViolation):
         run(box, {"archive": str(tmp_path / "outside.zip")})
+
+
+@pytest.mark.parametrize(
+    ("kind", "target"),
+    [
+        (tarfile.SYMTYPE, "/etc/passwd"),
+        (tarfile.SYMTYPE, "../outside"),
+        (tarfile.LNKTYPE, "x.txt"),
+        (tarfile.FIFOTYPE, ""),
+        (tarfile.CHRTYPE, ""),
+    ],
+)
+def test_tar_links_and_special_files_are_rejected(box: Sandbox, kind: bytes, target: str) -> None:
+    with tarfile.open(box.root / "evil.tar", "w") as tf:
+        info = tarfile.TarInfo("trap")
+        info.type = kind
+        info.linkname = target
+        tf.addfile(info)
+    with pytest.raises(ToolError) as info_:
+        run(box, {"archive": "evil.tar", "dest": "out"})
+    assert info_.value.code is ErrorCode.UNSUPPORTED
+    assert not (box.root / "out").exists()
+
+
+def test_zip_symlink_entries_are_rejected(box: Sandbox) -> None:
+    with zipfile.ZipFile(box.root / "evil.zip", "w") as zf:
+        link = zipfile.ZipInfo("trap")
+        link.create_system = 3
+        link.external_attr = 0o120777 << 16
+        zf.writestr(link, "/etc/passwd")
+    with pytest.raises(ToolError) as info:
+        run(box, {"archive": "evil.zip", "dest": "out"})
+    assert info.value.code is ErrorCode.UNSUPPORTED
+    assert not (box.root / "out").exists()
