@@ -368,6 +368,97 @@
   },
   {
     "function": {
+      "description": "Scale a video to a new size and/or frame rate, keeping the aspect ratio.\n\nWith only width or only height the other side follows the aspect ratio. With both, the\nvideo is scaled to fit inside that box and is never stretched. Disabled unless the\nsandbox allows writing.",
+      "name": "resize_video",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "create_parents": {
+            "default": false,
+            "description": "Create missing parent directories.",
+            "type": "boolean"
+          },
+          "crf": {
+            "anyOf": [
+              {
+                "maximum": 51,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Video quality, lower is better and larger."
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Target frames per second."
+          },
+          "height": {
+            "anyOf": [
+              {
+                "maximum": 7680,
+                "minimum": 16,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Target height in pixels."
+          },
+          "input": {
+            "description": "Source file, relative to the sandbox root.",
+            "type": "string"
+          },
+          "output": {
+            "description": "Video to create. Its extension selects the format: mp4, mov, mkv, webm, gif.",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Replace the output if it already exists.",
+            "type": "boolean"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "maximum": 7680,
+                "minimum": 16,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Target width in pixels."
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
       "description": "Save a single frame of a video as a png, jpg or webp image.\n\nDisabled unless the sandbox allows writing.",
       "name": "thumbnail",
       "parameters": {
