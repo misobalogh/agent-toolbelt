@@ -55,6 +55,7 @@ def media_files(tmp_path_factory: pytest.TempPathFactory) -> Path:
     (root / "garbage.wav").write_bytes(b"this is plain text, not audio\n" * 20)
     (root / "evil.m3u8").write_text("#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\n/etc/hostname\n")
     (root / "evil.txt").write_text("ffconcat version 1.0\nfile /etc/hostname\n")
+    (root / "disguised.png").write_text("ffconcat version 1.0\nfile /etc/hostname\n")
     return root
 
 

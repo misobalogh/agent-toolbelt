@@ -36,8 +36,11 @@ from toolbelt.core.errors import (
 )
 from toolbelt.core.models import ToolOutput
 
+# Single-file containers and single-image formats only. Playlist and sequence demuxers
+# (hls, concat, image2, sdp) are left out on purpose, they open other files.
 ALLOWED_DEMUXERS = (
-    "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,ogg,wav,mp3,flac,aac,gif,avi,mpegts,flv,asf,ac3"
+    "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,ogg,wav,mp3,flac,aac,gif,avi,mpegts,flv,asf,ac3,"
+    "png_pipe,jpeg_pipe,webp_pipe"
 )
 _MAX_THREADS = 4
 _MAX_ERROR_CHARS = 300

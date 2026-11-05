@@ -59,7 +59,7 @@ def test_probe_rejects_corrupt_files(media_box: Sandbox, name: str) -> None:
     assert str(media_box.root) not in info.value.message
 
 
-@pytest.mark.parametrize("name", ["evil.m3u8", "evil.txt"])
+@pytest.mark.parametrize("name", ["evil.m3u8", "evil.txt", "disguised.png"])
 def test_playlist_like_inputs_are_refused(media_box: Sandbox, name: str) -> None:
     with pytest.raises(ToolError) as info:
         probe(make_ctx(media_box), media_box.input_path(name))
