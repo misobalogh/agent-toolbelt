@@ -56,3 +56,18 @@ def test_deadline_raises_after_expiry() -> None:
     now[0] = 5.1
     with pytest.raises(ToolTimeout):
         deadline.check()
+
+
+def test_deadline_reports_the_time_left() -> None:
+    now = [0.0]
+    deadline = Deadline(5.0, clock=lambda: now[0])
+    now[0] = 2.0
+    assert deadline.remaining() == 3.0
+
+
+def test_deadline_remaining_raises_after_expiry() -> None:
+    now = [0.0]
+    deadline = Deadline(5.0, clock=lambda: now[0])
+    now[0] = 5.1
+    with pytest.raises(ToolTimeout):
+        deadline.remaining()

@@ -20,6 +20,8 @@ class Limits:
     max_extract_files: int = 1_000
     max_extract_bytes: int = 50_000_000
     max_compression_ratio: int = 100
+    max_media_bytes: int = 100_000_000
+    max_media_inputs: int = 10
     timeout_s: float = 10.0
 
     def with_overrides(self, **overrides: Any) -> Limits:
@@ -55,8 +57,14 @@ class Deadline:
         self._expires_at = clock() + timeout_s
 
     def check(self) -> None:
-        if self._clock() > self._expires_at:
+        self.remaining()
+
+    def remaining(self) -> float:
+        """Seconds left, for callers that must hand a timeout to something else."""
+        left = self._expires_at - self._clock()
+        if left < 0:
             raise ToolTimeout(
                 f"tool exceeded its time limit of {self._timeout_s:g}s",
                 hint="narrow the request or raise the timeout limit",
             )
+        return left
