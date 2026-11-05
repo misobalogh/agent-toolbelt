@@ -464,6 +464,41 @@
   },
   {
     "function": {
+      "description": "Write a copy of a video without its audio track.\n\nFails with invalid_input when the input has no audio stream. Disabled unless the\nsandbox allows writing.",
+      "name": "remove_audio",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "create_parents": {
+            "default": false,
+            "description": "Create missing parent directories.",
+            "type": "boolean"
+          },
+          "input": {
+            "description": "Source file, relative to the sandbox root.",
+            "type": "string"
+          },
+          "output": {
+            "description": "Video to create. Its extension selects the format: mp4, mov, mkv, webm, gif.",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Replace the output if it already exists.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "input",
+          "output"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
       "description": "Scale a video to a new size and/or frame rate, keeping the aspect ratio.\n\nWith only width or only height the other side follows the aspect ratio. With both, the\nvideo is scaled to fit inside that box and is never stretched. Disabled unless the\nsandbox allows writing.",
       "name": "resize_video",
       "parameters": {
