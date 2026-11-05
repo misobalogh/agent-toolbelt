@@ -84,17 +84,28 @@ class Sandbox:
         except PermissionError:
             raise _denied(raw) from None
 
-    def open_read(self, raw: str) -> BinaryIO:
+    def input_path(self, raw: str) -> Path:
+        """Resolved path of an existing regular file.
+
+        For tools that must give a real path to an external program. Prefer
+        `open_read` whenever a file handle is enough.
+        """
         resolved = self.resolve(raw)
+        if not resolved.is_file():
+            if not resolved.exists():
+                raise _missing(raw)
+            raise ToolError(
+                f"not a regular file: {raw}",
+                hint="use list_dir to see what the directory contains",
+                code=ErrorCode.NOT_A_FILE,
+            )
+        if not os.access(resolved, os.R_OK):
+            raise _denied(raw)
+        return resolved
+
+    def open_read(self, raw: str) -> BinaryIO:
+        resolved = self.input_path(raw)
         try:
-            if not resolved.is_file():
-                if not resolved.exists():
-                    raise _missing(raw)
-                raise ToolError(
-                    f"not a regular file: {raw}",
-                    hint="use list_dir to see what the directory contains",
-                    code=ErrorCode.NOT_A_FILE,
-                )
             return resolved.open("rb")
         except PermissionError:
             raise _denied(raw) from None
@@ -131,6 +142,38 @@ class Sandbox:
             raise ToolError(f"not a regular file: {raw}", code=ErrorCode.NOT_A_FILE) from None
         except (PermissionError, NotADirectoryError):
             raise _denied(raw) from None
+
+    def output_path(
+        self, raw: str, *, overwrite: bool = False, create_parents: bool = False
+    ) -> Path:
+        """Resolved path of a file that a tool is about to produce.
+
+        Applies the same rules as `open_write` but creates nothing except,
+        when asked, the missing parent directories.
+        """
+        self.ensure_writable()
+        resolved = self.resolve(raw)
+        if resolved == self._root:
+            raise InvalidInput("cannot write to the sandbox root itself")
+        if resolved.is_dir():
+            raise ToolError(f"not a regular file: {raw}", code=ErrorCode.NOT_A_FILE)
+        if resolved.exists() and not overwrite:
+            raise AlreadyExists(
+                f"file already exists: {raw}", hint="set overwrite to true to replace it"
+            )
+        if not resolved.parent.is_dir():
+            if not create_parents:
+                raise NotFound(
+                    f"parent directory does not exist: {self.display(resolved.parent)}",
+                    hint="set create_parents to true or create the directory first",
+                )
+            try:
+                resolved.parent.mkdir(parents=True, exist_ok=True)
+            except (PermissionError, NotADirectoryError, FileExistsError):
+                raise _denied(raw) from None
+        if not os.access(resolved.parent, os.W_OK):
+            raise _denied(raw)
+        return resolved
 
     def list_dir(self, raw: str) -> list[Entry]:
         resolved = self.resolve(raw)
