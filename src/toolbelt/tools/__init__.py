@@ -3,6 +3,7 @@
 from toolbelt.tools import (
     convert_media,
     extract_archive,
+    extract_audio,
     file_info,
     find_files,
     list_dir,
@@ -14,6 +15,7 @@ from toolbelt.tools import (
 __all__ = [
     "convert_media",
     "extract_archive",
+    "extract_audio",
     "file_info",
     "find_files",
     "list_dir",
