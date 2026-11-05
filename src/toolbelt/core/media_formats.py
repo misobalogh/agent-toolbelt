@@ -17,6 +17,7 @@ FormatKind = Literal["audio", "video", "image"]
 AUDIO_ONLY: tuple[FormatKind, ...] = ("audio",)
 AUDIO_OR_VIDEO: tuple[FormatKind, ...] = ("audio", "video")
 IMAGE_ONLY: tuple[FormatKind, ...] = ("image",)
+VIDEO_ONLY: tuple[FormatKind, ...] = ("video",)
 
 # x264 and vp9 reject odd frame sizes in the yuv420p pixel format.
 _EVEN_SIZE = "scale=trunc(iw/2)*2:trunc(ih/2)*2"

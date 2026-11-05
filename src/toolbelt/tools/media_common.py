@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -66,27 +66,44 @@ def transcode(
     output_options: Sequence[str] = (),
     drop_audio: bool = False,
     need_audio: bool = False,
+    stream_copy: bool = False,
+    validate: Callable[[MediaProbe], None] | None = None,
 ) -> MediaResult:
     """Read `args.input`, write `args.output` in the format its extension names.
 
     The first real video stream and the first audio stream are used. Filters are
-    applied only to a stream that ends up in the output.
+    applied only to a stream that ends up in the output. `validate` may reject the
+    request after the input was probed and before anything is written.
     """
     spec = format_for(args.output, kinds)
     source = media_input(ctx, args.input)
     info = probe(ctx, source)
+    if validate is not None:
+        validate(info)
     chosen = _select_streams(info, spec, drop_audio=drop_audio, need_audio=need_audio)
     target = ctx.sandbox.output_path(
         args.output, overwrite=args.overwrite, create_parents=args.create_parents
     )
+    out: list[str] = []
+    for stream in chosen:
+        out += ["-map", f"0:{stream.index}"]
+    has_video = any(s.type == "video" for s in chosen)
+    has_audio = any(s.type == "audio" for s in chosen)
+    if stream_copy:
+        out += ["-c", "copy", *spec.muxer_extra]
+    else:
+        filters = [f for f in (video_filter, spec.video_filter) if f and has_video]
+        if filters:
+            out += ["-vf", ",".join(filters)]
+        if audio_filter and has_audio:
+            out += ["-af", audio_filter]
+        out += codec_args(spec, quality or Quality(), video=has_video, audio=has_audio)
     size = run_ffmpeg(
         ctx,
         inputs=[MediaInput(source, tuple(input_options))],
         output=target,
         muxer=spec.muxer,
-        args=_encode_args(
-            spec, chosen, quality or Quality(), video_filter, audio_filter, output_options
-        ),
+        args=[*out, *output_options],
         overwrite=args.overwrite,
     )
     return MediaResult(path=ctx.sandbox.display(target), format=spec.name, size_bytes=size)
@@ -115,29 +132,16 @@ def _select_streams(
     return [video[0], audio[0]] if keep_audio else [video[0]]
 
 
-def _encode_args(
-    spec: FormatSpec,
-    streams: Sequence[StreamInfo],
-    quality: Quality,
-    video_filter: str | None,
-    audio_filter: str | None,
-    output_options: Sequence[str],
-) -> list[str]:
+def codec_args(spec: FormatSpec, quality: Quality, *, video: bool, audio: bool) -> list[str]:
+    """Codec, quality and container settings for the streams that are written."""
     out: list[str] = []
-    for stream in streams:
-        out += ["-map", f"0:{stream.index}"]
-    if any(s.type == "video" for s in streams):
-        filters = [f for f in (video_filter, spec.video_filter) if f]
-        if filters:
-            out += ["-vf", ",".join(filters)]
+    if video:
         out += ["-c:v", str(spec.video_codec)]
         if spec.crf_default is not None:
             crf = spec.crf_default if quality.crf is None else quality.crf
             out += ["-crf", str(crf)]
         out += spec.video_extra
-    if any(s.type == "audio" for s in streams):
-        if audio_filter:
-            out += ["-af", audio_filter]
+    if audio:
         out += ["-c:a", str(spec.audio_codec)]
         if spec.lossy_audio:
             if quality.audio_kbps is None and spec.audio_vbr is not None:
@@ -148,4 +152,4 @@ def _encode_args(
             out += ["-ar", str(quality.sample_rate)]
         if quality.channels is not None:
             out += ["-ac", str(quality.channels)]
-    return [*out, *spec.muxer_extra, *output_options]
+    return [*out, *spec.muxer_extra]
