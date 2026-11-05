@@ -9,6 +9,7 @@ from toolbelt.tools import (
     list_dir,
     media_info,
     read_text,
+    trim_media,
     write_text,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "list_dir",
     "media_info",
     "read_text",
+    "trim_media",
     "write_text",
 ]

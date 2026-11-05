@@ -731,6 +731,97 @@
     }
   },
   {
+    "description": "Keep only a time range of an audio or video file.\n\nGive start_s and either end_s or duration_s. Without both of those the cut runs to\nthe end of the input. Disabled unless the sandbox allows writing.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "duration_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 86400,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Length of the cut in seconds. Do not combine with end_s."
+        },
+        "end_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 86400,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where the cut ends, in seconds from the start of the input. Do not combine with duration_s."
+        },
+        "input": {
+          "description": "Source file, relative to the sandbox root.",
+          "type": "string"
+        },
+        "output": {
+          "description": "File to create. Its extension selects the format. Audio: mp3, m4a, aac, ogg, opus, flac, wav. Video: mp4, mov, mkv, webm, gif.",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the output if it already exists.",
+          "type": "boolean"
+        },
+        "start_s": {
+          "default": 0.0,
+          "description": "Where the cut begins, in seconds.",
+          "maximum": 86400,
+          "minimum": 0,
+          "type": "number"
+        },
+        "stream_copy": {
+          "default": false,
+          "description": "Copy the streams instead of re-encoding. Much faster and lossless, but the cut snaps to keyframes and the output must use the same format as the input.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "type": "object"
+    },
+    "name": "trim_media",
+    "outputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "format",
+        "size_bytes"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "Write text to a file. Disabled unless the operator enabled writing for the sandbox.",
     "inputSchema": {
       "additionalProperties": false,

@@ -62,24 +62,23 @@ def transcode(
     quality: Quality | None = None,
     video_filter: str | None = None,
     audio_filter: str | None = None,
-    input_options: Sequence[str] = (),
+    input_options: Sequence[str] | Callable[[MediaProbe], Sequence[str]] = (),
     output_options: Sequence[str] = (),
     drop_audio: bool = False,
     need_audio: bool = False,
     stream_copy: bool = False,
-    validate: Callable[[MediaProbe], None] | None = None,
 ) -> MediaResult:
     """Read `args.input`, write `args.output` in the format its extension names.
 
     The first real video stream and the first audio stream are used. Filters are
-    applied only to a stream that ends up in the output. `validate` may reject the
-    request after the input was probed and before anything is written.
+    applied only to a stream that ends up in the output. `input_options` may be a
+    function of the probe result, which lets a tool reject a request that does not fit
+    the input (a start time past the end) before anything is written.
     """
     spec = format_for(args.output, kinds)
     source = media_input(ctx, args.input)
     info = probe(ctx, source)
-    if validate is not None:
-        validate(info)
+    leading = input_options(info) if callable(input_options) else input_options
     chosen = _select_streams(info, spec, drop_audio=drop_audio, need_audio=need_audio)
     target = ctx.sandbox.output_path(
         args.output, overwrite=args.overwrite, create_parents=args.create_parents
@@ -100,7 +99,7 @@ def transcode(
         out += codec_args(spec, quality or Quality(), video=has_video, audio=has_audio)
     size = run_ffmpeg(
         ctx,
-        inputs=[MediaInput(source, tuple(input_options))],
+        inputs=[MediaInput(source, tuple(leading))],
         output=target,
         muxer=spec.muxer,
         args=[*out, *output_options],
