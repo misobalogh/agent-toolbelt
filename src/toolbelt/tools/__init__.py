@@ -1,6 +1,7 @@
 """Importing this package registers every tool in the default registry."""
 
 from toolbelt.tools import (
+    change_speed,
     convert_media,
     extract_archive,
     extract_audio,
@@ -16,6 +17,7 @@ from toolbelt.tools import (
 )
 
 __all__ = [
+    "change_speed",
     "convert_media",
     "extract_archive",
     "extract_audio",

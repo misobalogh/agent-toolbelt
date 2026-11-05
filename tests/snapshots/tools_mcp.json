@@ -1,5 +1,63 @@
 [
   {
+    "description": "Change the playback speed of an audio or video file without changing the pitch.\n\nThe result is shorter for factor > 1 and longer for factor < 1. Disabled unless the\nsandbox allows writing.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "factor": {
+          "description": "Playback speed. 2 is twice as fast, 0.5 is half speed. Pitch is kept.",
+          "maximum": 4.0,
+          "minimum": 0.25,
+          "type": "number"
+        },
+        "input": {
+          "description": "Source file, relative to the sandbox root.",
+          "type": "string"
+        },
+        "output": {
+          "description": "File to create. Its extension selects the format. Audio: mp3, m4a, aac, ogg, opus, flac, wav. Video: mp4, mov, mkv, webm, gif.",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the output if it already exists.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "input",
+        "output",
+        "factor"
+      ],
+      "type": "object"
+    },
+    "name": "change_speed",
+    "outputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "format",
+        "size_bytes"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "Convert an audio or video file to another format, chosen by the output extension.\n\nConverting a video to an audio format keeps only the audio. Video formats keep the\nfirst video and the first audio stream. Disabled unless the sandbox allows writing.",
     "inputSchema": {
       "additionalProperties": false,
