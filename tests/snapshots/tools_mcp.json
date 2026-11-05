@@ -731,6 +731,85 @@
     }
   },
   {
+    "description": "Save a single frame of a video as a png, jpg or webp image.\n\nDisabled unless the sandbox allows writing.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "at_s": {
+          "anyOf": [
+            {
+              "maximum": 86400,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Time of the frame in seconds. Default: the middle of the video."
+        },
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "input": {
+          "description": "Source file, relative to the sandbox root.",
+          "type": "string"
+        },
+        "output": {
+          "description": "Image to create. Its extension selects the format: png, jpg, webp.",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the output if it already exists.",
+          "type": "boolean"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "maximum": 4096,
+              "minimum": 16,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Scale the image to this width in pixels, keeping the aspect ratio."
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "type": "object"
+    },
+    "name": "thumbnail",
+    "outputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "format",
+        "size_bytes"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "Keep only a time range of an audio or video file.\n\nGive start_s and either end_s or duration_s. Without both of those the cut runs to\nthe end of the input. Disabled unless the sandbox allows writing.",
     "inputSchema": {
       "additionalProperties": false,
