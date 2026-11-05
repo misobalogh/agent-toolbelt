@@ -1,5 +1,56 @@
 [
   {
+    "description": "Make audio louder or quieter by a fixed number of dB, or normalize its loudness.\n\nWorks on the first audio stream of audio and video files. A video is re-encoded.\nDisabled unless the sandbox allows writing.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "gain_db": {
+          "anyOf": [
+            {
+              "maximum": 40,
+              "minimum": -60,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Change the volume by this many decibels. +6 is about twice as loud."
+        },
+        "input": {
+          "description": "Source file, relative to the sandbox root.",
+          "type": "string"
+        },
+        "normalize": {
+          "default": false,
+          "description": "Normalize loudness to -16 LUFS instead of applying a fixed gain. The audio is resampled to 48 kHz. Do not combine with gain_db.",
+          "type": "boolean"
+        },
+        "output": {
+          "description": "File to create. Its extension selects the format. Audio: mp3, m4a, aac, ogg, opus, flac, wav. Video: mp4, mov, mkv, webm, gif.",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the output if it already exists.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "type": "object"
+    },
+    "name": "adjust_volume"
+  },
+  {
     "description": "Change the playback speed of an audio or video file without changing the pitch.\n\nThe result is shorter for factor > 1 and longer for factor < 1. Disabled unless the\nsandbox allows writing.",
     "input_schema": {
       "additionalProperties": false,
