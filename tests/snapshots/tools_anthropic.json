@@ -105,6 +105,23 @@
     "name": "list_dir"
   },
   {
+    "description": "Describe an audio or video file: container, duration, bit rate and every stream.\n\nStreams list codec, resolution and frame rate (video) or sample rate and channels\n(audio). Use it before converting or trimming to see what a file contains.",
+    "input_schema": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Audio or video file, relative to the sandbox root.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "media_info"
+  },
+  {
     "description": "Read a text file. Large files are cut at max_bytes and flagged as truncated.",
     "input_schema": {
       "additionalProperties": false,

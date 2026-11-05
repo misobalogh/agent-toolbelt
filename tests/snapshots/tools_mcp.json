@@ -258,6 +258,187 @@
     }
   },
   {
+    "description": "Describe an audio or video file: container, duration, bit rate and every stream.\n\nStreams list codec, resolution and frame rate (video) or sample rate and channels\n(audio). Use it before converting or trimming to see what a file contains.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Audio or video file, relative to the sandbox root.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "media_info",
+    "outputSchema": {
+      "$defs": {
+        "StreamInfo": {
+          "properties": {
+            "bit_rate": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "channels": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "codec": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cover_art": {
+              "default": false,
+              "type": "boolean"
+            },
+            "duration_s": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fps": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "height": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "index": {
+              "type": "integer"
+            },
+            "sample_rate": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "type": {
+              "enum": [
+                "video",
+                "audio",
+                "subtitle",
+                "data",
+                "other"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "index",
+            "type",
+            "codec",
+            "duration_s",
+            "bit_rate"
+          ],
+          "type": "object"
+        }
+      },
+      "properties": {
+        "bit_rate": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "format_name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        },
+        "streams": {
+          "items": {
+            "$ref": "#/$defs/StreamInfo"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "format_name",
+        "duration_s",
+        "size_bytes",
+        "bit_rate",
+        "streams",
+        "path"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "Read a text file. Large files are cut at max_bytes and flagged as truncated.",
     "inputSchema": {
       "additionalProperties": false,
