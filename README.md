@@ -19,7 +19,8 @@ whole filesystem.
 
 ## Non-goals
 
-- Running arbitrary code (no `eval`, no shell, no subprocess with user input).
+- Running arbitrary code (no `eval`, no shell, no subprocess with user input). The only
+  subprocess is `ffmpeg`/`ffprobe` in `core/media.py`, fed with validated arguments only.
 - Network access of any kind.
 - An agent loop. toolbelt only provides the tools, not the thing that calls them.
 

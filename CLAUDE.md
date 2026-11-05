@@ -15,6 +15,9 @@ Python library of safe, typed tools for AI agents working with files and media.
 - Tools never raise bare exceptions. Use `ToolError` with code, message, hint.
 - Schemas are generated from models. Never hand-edit schema snapshots, regenerate them.
 - No network access, no subprocess with user input, no `eval`/`exec`.
+  Single exception: `core/media.py` runs `ffmpeg`/`ffprobe` with an argv list built only
+  from validated fields (enums, bounded numbers, sandbox-resolved paths). Never
+  `shell=True`, never a raw user string as an option. No other module may import `subprocess`.
 - Do not add a dependency without asking. State the reason and alternatives.
 - No placeholder code, TODO stubs or speculative abstractions.
 - Ask before changing any public model or the registry API.
