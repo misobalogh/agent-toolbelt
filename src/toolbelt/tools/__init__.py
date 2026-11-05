@@ -1,6 +1,7 @@
 """Importing this package registers every tool in the default registry."""
 
 from toolbelt.tools import (
+    convert_media,
     extract_archive,
     file_info,
     find_files,
@@ -11,6 +12,7 @@ from toolbelt.tools import (
 )
 
 __all__ = [
+    "convert_media",
     "extract_archive",
     "file_info",
     "find_files",

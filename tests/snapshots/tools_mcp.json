@@ -1,5 +1,121 @@
 [
   {
+    "description": "Convert an audio or video file to another format, chosen by the output extension.\n\nConverting a video to an audio format keeps only the audio. Video formats keep the\nfirst video and the first audio stream. Disabled unless the sandbox allows writing.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "audio_bitrate_kbps": {
+          "anyOf": [
+            {
+              "maximum": 512,
+              "minimum": 8,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Audio bit rate in kbit/s. Ignored for lossless formats (flac, wav)."
+        },
+        "channels": {
+          "anyOf": [
+            {
+              "enum": [
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1 for mono, 2 for stereo."
+        },
+        "create_parents": {
+          "default": false,
+          "description": "Create missing parent directories.",
+          "type": "boolean"
+        },
+        "crf": {
+          "anyOf": [
+            {
+              "maximum": 51,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Video quality, lower is better and larger. Default 23, webm 32."
+        },
+        "input": {
+          "description": "Source file, relative to the sandbox root.",
+          "type": "string"
+        },
+        "output": {
+          "description": "File to create. Its extension selects the format. Audio: mp3, m4a, aac, ogg, opus, flac, wav. Video: mp4, mov, mkv, webm, gif.",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "description": "Replace the output if it already exists.",
+          "type": "boolean"
+        },
+        "sample_rate": {
+          "anyOf": [
+            {
+              "enum": [
+                8000,
+                16000,
+                22050,
+                24000,
+                32000,
+                44100,
+                48000
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Audio sample rate in Hz."
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "type": "object"
+    },
+    "name": "convert_media",
+    "outputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "format",
+        "size_bytes"
+      ],
+      "type": "object"
+    }
+  },
+  {
     "description": "Extract the files of a zip or tar archive. Empty directories are not recreated.",
     "inputSchema": {
       "additionalProperties": false,

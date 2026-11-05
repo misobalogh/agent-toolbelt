@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+from pydantic import Field
 
 from toolbelt.core.context import Context
-from toolbelt.core.errors import LimitExceeded
+from toolbelt.core.errors import InvalidInput, LimitExceeded
+from toolbelt.core.media import MediaInput, MediaProbe, StreamInfo, probe, run_ffmpeg
+from toolbelt.core.media_formats import FormatKind, FormatSpec, format_for
+from toolbelt.core.models import ToolInput, ToolOutput
+
+SampleRate = Literal[8000, 16000, 22050, 24000, 32000, 44100, 48000]
+Channels = Literal[1, 2]
 
 
 def media_input(ctx: Context, raw: str) -> Path:
@@ -18,3 +29,123 @@ def media_input(ctx: Context, raw: str) -> Path:
             hint="use a smaller file or ask the operator to raise max_media_bytes",
         )
     return path
+
+
+class MediaTransformInput(ToolInput):
+    """Fields shared by every tool that reads one media file and writes another."""
+
+    input: str = Field(description="Source file, relative to the sandbox root.")
+    output: str = Field(description="File to create. Its extension selects the format.")
+    overwrite: bool = Field(default=False, description="Replace the output if it already exists.")
+    create_parents: bool = Field(default=False, description="Create missing parent directories.")
+
+
+class MediaResult(ToolOutput):
+    path: str
+    format: str
+    size_bytes: int
+
+
+@dataclass(frozen=True)
+class Quality:
+    audio_kbps: int | None = None
+    crf: int | None = None
+    sample_rate: int | None = None
+    channels: int | None = None
+
+
+def transcode(
+    ctx: Context,
+    args: MediaTransformInput,
+    *,
+    kinds: Collection[FormatKind],
+    quality: Quality | None = None,
+    video_filter: str | None = None,
+    audio_filter: str | None = None,
+    input_options: Sequence[str] = (),
+    output_options: Sequence[str] = (),
+    drop_audio: bool = False,
+    need_audio: bool = False,
+) -> MediaResult:
+    """Read `args.input`, write `args.output` in the format its extension names.
+
+    The first real video stream and the first audio stream are used. Filters are
+    applied only to a stream that ends up in the output.
+    """
+    spec = format_for(args.output, kinds)
+    source = media_input(ctx, args.input)
+    info = probe(ctx, source)
+    chosen = _select_streams(info, spec, drop_audio=drop_audio, need_audio=need_audio)
+    target = ctx.sandbox.output_path(
+        args.output, overwrite=args.overwrite, create_parents=args.create_parents
+    )
+    size = run_ffmpeg(
+        ctx,
+        inputs=[MediaInput(source, tuple(input_options))],
+        output=target,
+        muxer=spec.muxer,
+        args=_encode_args(
+            spec, chosen, quality or Quality(), video_filter, audio_filter, output_options
+        ),
+        overwrite=args.overwrite,
+    )
+    return MediaResult(path=ctx.sandbox.display(target), format=spec.name, size_bytes=size)
+
+
+def _select_streams(
+    info: MediaProbe, spec: FormatSpec, *, drop_audio: bool, need_audio: bool
+) -> list[StreamInfo]:
+    video = info.video_streams()
+    audio = info.audio_streams()
+    if need_audio and not audio:
+        raise InvalidInput(
+            "the input has no audio stream", hint="use media_info to see which streams it has"
+        )
+    if spec.kind == "audio":
+        if not audio:
+            raise InvalidInput(
+                "the input has no audio stream", hint="use media_info to see which streams it has"
+            )
+        return [audio[0]]
+    if not video:
+        raise InvalidInput(
+            "the input has no video stream", hint="use media_info to see which streams it has"
+        )
+    keep_audio = spec.audio_codec is not None and not drop_audio and bool(audio)
+    return [video[0], audio[0]] if keep_audio else [video[0]]
+
+
+def _encode_args(
+    spec: FormatSpec,
+    streams: Sequence[StreamInfo],
+    quality: Quality,
+    video_filter: str | None,
+    audio_filter: str | None,
+    output_options: Sequence[str],
+) -> list[str]:
+    out: list[str] = []
+    for stream in streams:
+        out += ["-map", f"0:{stream.index}"]
+    if any(s.type == "video" for s in streams):
+        filters = [f for f in (video_filter, spec.video_filter) if f]
+        if filters:
+            out += ["-vf", ",".join(filters)]
+        out += ["-c:v", str(spec.video_codec)]
+        if spec.crf_default is not None:
+            crf = spec.crf_default if quality.crf is None else quality.crf
+            out += ["-crf", str(crf)]
+        out += spec.video_extra
+    if any(s.type == "audio" for s in streams):
+        if audio_filter:
+            out += ["-af", audio_filter]
+        out += ["-c:a", str(spec.audio_codec)]
+        if spec.lossy_audio:
+            if quality.audio_kbps is None and spec.audio_vbr is not None:
+                out += ["-q:a", str(spec.audio_vbr)]
+            else:
+                out += ["-b:a", f"{quality.audio_kbps or spec.audio_kbps}k"]
+        if quality.sample_rate is not None:
+            out += ["-ar", str(quality.sample_rate)]
+        if quality.channels is not None:
+            out += ["-ac", str(quality.channels)]
+    return [*out, *spec.muxer_extra, *output_options]

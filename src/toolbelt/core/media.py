@@ -28,6 +28,7 @@ from toolbelt.core.context import Context
 from toolbelt.core.errors import (
     AlreadyExists,
     ErrorCode,
+    InvalidInput,
     LimitExceeded,
     ToolError,
     ToolTimeout,
@@ -205,27 +206,46 @@ def _run(ctx: Context, argv: list[str]) -> subprocess.CompletedProcess[bytes]:
         ) from None
 
 
-def _last_line(ctx: Context, stderr: bytes) -> str:
+def _lines(ctx: Context, stderr: bytes) -> list[str]:
     text = stderr.decode("utf-8", "replace").replace(f"{ctx.sandbox.root}/", "")
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    return lines[-1][:_MAX_ERROR_CHARS] if lines else "no error output"
+    return [line.strip()[:_MAX_ERROR_CHARS] for line in text.splitlines() if line.strip()]
+
+
+def _last_line(ctx: Context, stderr: bytes) -> str:
+    lines = _lines(ctx, stderr)
+    return lines[-1] if lines else "no error output"
 
 
 def _ffmpeg_failure(ctx: Context, stderr: bytes) -> ToolError:
-    line = _last_line(ctx, stderr)
-    lowered = line.lower()
-    if any(marker in lowered for marker in ("invalid data", "moov atom", "end of file")):
+    """Turn ffmpeg's complaints into a structured error.
+
+    The last line is often a consequence ("nothing was written"), so the first
+    line that matches a known cause is the one reported.
+    """
+    lines = _lines(ctx, stderr)
+
+    def first(*markers: str) -> str | None:
+        return next((ln for ln in lines if any(m in ln.lower() for m in markers)), None)
+
+    if line := first("invalid data", "moov atom", "end of file"):
         return ToolError(
             f"the input is corrupt or truncated: {line}",
             hint="try another file",
             code=ErrorCode.CORRUPT,
         )
-    if any(marker in lowered for marker in ("unknown encoder", "not found", "unsupported")):
-        return Unsupported(
-            f"this ffmpeg build cannot do that: {line}",
-            hint="try another output format",
+    if line := first("error while opening encoder"):
+        return InvalidInput(
+            f"the encoder rejected these settings: {line}",
+            hint="try a lower audio_bitrate_kbps or another sample_rate",
         )
-    return ToolError(f"ffmpeg failed: {line}", hint="check the arguments and the input")
+    if line := first("unknown encoder", "not found", "unsupported"):
+        return Unsupported(
+            f"this ffmpeg build cannot do that: {line}", hint="try another output format"
+        )
+    return ToolError(
+        f"ffmpeg failed: {lines[-1] if lines else 'no error output'}",
+        hint="check the arguments and the input",
+    )
 
 
 def _create_temp(output: Path) -> Path:
