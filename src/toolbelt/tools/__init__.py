@@ -3,6 +3,7 @@
 from toolbelt.tools import (
     adjust_volume,
     change_speed,
+    concat_media,
     convert_media,
     extract_archive,
     extract_audio,
@@ -21,6 +22,7 @@ from toolbelt.tools import (
 __all__ = [
     "adjust_volume",
     "change_speed",
+    "concat_media",
     "convert_media",
     "extract_archive",
     "extract_audio",

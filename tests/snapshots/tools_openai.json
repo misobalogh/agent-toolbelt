@@ -97,6 +97,45 @@
   },
   {
     "function": {
+      "description": "Join audio files or video files into one file, in the given order.\n\nEverything is re-encoded, so the inputs may differ in format. For video, every clip\nis scaled to fit the size and frame rate of the first one. All inputs must have audio,\nor none of them. Disabled unless the sandbox allows writing.",
+      "name": "concat_media",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "create_parents": {
+            "default": false,
+            "description": "Create missing parent directories.",
+            "type": "boolean"
+          },
+          "inputs": {
+            "description": "Files to join in this order, relative to the sandbox root. At least 2.",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "type": "array"
+          },
+          "output": {
+            "description": "File to create. Its extension selects the format. Audio: mp3, m4a, aac, ogg, opus, flac, wav. Video: mp4, mov, mkv, webm, gif.",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Replace the output if it already exists.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inputs",
+          "output"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
       "description": "Convert an audio or video file to another format, chosen by the output extension.\n\nConverting a video to an audio format keeps only the audio. Video formats keep the\nfirst video and the first audio stream. Disabled unless the sandbox allows writing.",
       "name": "convert_media",
       "parameters": {
